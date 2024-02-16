@@ -1,0 +1,55 @@
+--Detected and removed duplicates:
+
+WITH cte1 AS (
+SELECT CustomerID, ShipName, ShipAddress, ShipPostalCode, ShipCountry,
+ROW_NUMBER() OVER(partition by CustomerID ORDER BY CustomerID) AS rn 
+FROM Orders
+)
+SELECT * from cte1 where rn = 1
+
+
+
+--Cleaned data w/ CASE statements
+
+SELECT Freight,
+CASE WHEN Freight < 50 THEN 'Low Charge'
+	WHEN freight between 50 and 200 THEN 'Medium Charge'
+	WHEN freight > 200 THEN 'HIGH Charge'
+	ELSE 'no charge'
+	END as Charge
+FROM Orders
+
+
+--Removed NULLs
+
+SELECT CustomerID, ContactName, City,
+ISNULL(Region, 'No Region') AS Region
+FROM Customers
+
+
+Delete rows of “quantity per unit” from the Products table
+
+SELECT QuantityPerUnit
+CASE WHEN UnitsOnOrder >50 AND UnitsInStock <20 THEN ‘Restock now’ END AS WhentoRestock
+
+--Found out what products need to be restocked and when
+
+SELECT QuantityPerUnit,
+CASE WHEN UnitsOnOrder >50 AND UnitsInStock <20 THEN 'Restock Now'
+	WHEN UnitsOnOrder BETWEEN 38 AND 50 AND UnitsInStock<20 THEN 'Restock Next Week'
+	WHEN UnitsOnOrder BETWEEN 30 AND 50 AND UnitsInSTock <50 THEN 'Restock Next Month'
+	WHEN UnitsOnOrder <50 AND UnitsInSTock<50 THEN 'Restock in 6 months'
+	ELSE 'Ask Manager'
+END AS WhenToRestock
+FROM Products
+
+
+--Replaced “Fax” with “No Fax Specified” when “Fax” is null in the Customer table, then found these rows fitting this condition using a CTE.
+
+WITH blank_fax as (
+Select CustomerID, ContactName, City, Region,
+ISNULL(Fax, 'No Fax') as Fax
+from Customers
+)
+Select * from blank_fax where fax = 'No Fax'
+
